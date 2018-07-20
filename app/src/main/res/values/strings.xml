@@ -1,0 +1,23 @@
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!--Strings for the Application-->
+    <string name="app_name">Bluetooth Chat Workshop</string>
+
+
+    <!--Strings for the Main Activity-->
+
+    <!--Strings for the DeviceList Activity-->
+
+    <!--Strings for the ConnectedActivity-->
+    <string name="title_connecting">Connecting…</string>
+    <string name="title_connected_to">Connected to <xliff:g id="device_name">%1$s</xliff:g></string>
+    <string name="title_not_connected">Not connected</string>
+    <string name="not_connected">You are not connected to a device</string>
+
+    <!--Strings for the menu-->
+    <string name="accept_connection">Accept Connection</string>
+    <string name="bluetooth_settings">Bluetooth Settings</string>
+    <string name="help">Help</string>
+    <string name="about">About</string>
+
+</resources>
