@@ -1,5 +1,6 @@
 package com.skydiver.bluetoothchatworkshop;
 
+import android.annotation.SuppressLint;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -29,10 +30,8 @@ public class ConnectedActivity extends Activity {
     EditText editData;
     Button sendButton;
     ListView transferredDataView;
-    TextView connectedDevice;
     ArrayAdapter<String> arrayAdapter;
     BluetoothHandler myBluetoothHandler;
-    private MediaPlayer mSoundHorn;
     /**
      * Name of the connected device
      */
@@ -42,8 +41,6 @@ public class ConnectedActivity extends Activity {
      * String buffer for outgoing messages
      */
     private StringBuffer mOutStringBuffer;
-
-    String len, breadth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -179,15 +176,17 @@ public class ConnectedActivity extends Activity {
     /**
      * The Handler that gets information back from the BluetoothChatService
      */
-    private final Handler mHandler = new Handler() {
+    @SuppressLint("HandlerLeak")
+    final Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case Constants.MESSAGE_STATE_CHANGE:
                     switch (msg.arg1) {
                         case BluetoothHandler.STATE_CONNECTED:
-                            setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
+//                            setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
                             arrayAdapter.clear();
+
                             break;
                         case BluetoothHandler.STATE_CONNECTING:
                             setStatus(R.string.title_connecting);
@@ -231,22 +230,6 @@ public class ConnectedActivity extends Activity {
             }
         }
     };
-
-
-    private void soundHorn() {
-        Thread hornThread = new Thread() {
-            @Override
-            public void run() {
-                mSoundHorn.start();
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    Log.e("in soundHorn", "exception occured");
-                }
-            }
-        };
-        hornThread.start();
-    }
 
     /**
      * Updates the status on the action bar.

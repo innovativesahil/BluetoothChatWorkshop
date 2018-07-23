@@ -25,7 +25,7 @@ public class BluetoothHandler {
     private static final String TAG = "BluetoothHandler";
 
     // Name for the SDP record when creating server socket
-    private static final String SERVICE_NAME = "BluetoothChatSecure";
+    private static final String SERVICE_NAME = "BluetoothChat";
 
     // UUID for SPP  (Serial Port Profile) or simple RFCOMM Connection
     private static final UUID MY_UUID =

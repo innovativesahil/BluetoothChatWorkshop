@@ -15,7 +15,7 @@
     <string name="not_connected">You are not connected to a device</string>
 
     <!--Strings for the menu-->
-    <string name="accept_connection">Accept Connection</string>
+    <string name="ensure_discoverable">Make Discoverable</string>
     <string name="bluetooth_settings">Bluetooth Settings</string>
     <string name="help">Help</string>
     <string name="about">About</string>

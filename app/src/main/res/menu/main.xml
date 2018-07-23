@@ -2,9 +2,9 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/menu_accept_connection"
+        android:id="@+id/menu_ensure_discover"
         android:icon="@android:drawable/ic_menu_preferences"
-        android:title="@string/accept_connection"
+        android:title="@string/ensure_discoverable"
         app:showAsAction="never" />
 
     <item

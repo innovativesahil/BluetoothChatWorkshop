@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
+import android.nfc.Tag;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -21,10 +22,14 @@ import java.util.Set;
 
 public class MainActivity extends Activity {
 
-    //Tag for debugging info in Logcat
+    /**
+     *Tag for debugging info in Logcat
+     */
     private static final String TAG = "Main Activity";
 
-    //Extra for intent
+    /**
+     *Extra for intent for ConnectedActivity
+     */
     public static final String EXTRA_DEVICE_ADDRESS = "device_address";
 
     //Request codes for intents
@@ -33,30 +38,16 @@ public class MainActivity extends Activity {
     private static final int REQUEST_CONNECT_DEVICE = 3;
 
     /**
-     * Name of the connected device
-     */
-    private String mConnectedDeviceName = null;
-
-    /**
-     * String buffer for outgoing messages
-     */
-    private StringBuffer mOutStringBuffer;
-
-    /**
      * Local Bluetooth adapter
      */
     private BluetoothAdapter mBluetoothAdapter = null;
 
-    /**
-     * Member object for the Bluetooth connection
-     */
-    private BluetoothHandler mBluetoothHandler = null;
 
-    private Button toggleBTButton;
+    private Button toggleBTButton, loadDevices;
     private ListView pairedDevicesList;
 
-    ArrayList<String> arrayList = new ArrayList<>();
-    ArrayAdapter<String> mNewDevicesArrayAdapter;
+    ArrayList<String> arrayList;
+    ArrayAdapter<String>  pairedDevicesArrayAdapter;
     Set<BluetoothDevice> pairedDevices;
 
     @Override
@@ -67,13 +58,27 @@ public class MainActivity extends Activity {
         // Get local Bluetooth adapter
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
+        arrayList = new ArrayList<>();
+        pairedDevicesArrayAdapter =
+                new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, arrayList);
+
         // Giving references to views
-        pairedDevicesList = (ListView) findViewById(R.id.list_paired_devices);
-        toggleBTButton = (Button) findViewById(R.id.button_toggle);
+        pairedDevicesList =  findViewById(R.id.list_paired_devices);
+        pairedDevicesList.setAdapter(pairedDevicesArrayAdapter);
+        toggleBTButton = findViewById(R.id.button_toggle);
 
         toggleBTButton.setOnClickListener(mToggleClickListener);
+
         pairedDevicesList.setOnItemClickListener(mDeviceClickListener);
-        mNewDevicesArrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
+
+        loadDevices = findViewById(R.id.button_load_devices);
+        loadDevices.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(mBluetoothAdapter != null && mBluetoothAdapter.isEnabled())
+                    loadPairedDevices();
+            }
+        });
     }
 
     /**
@@ -88,22 +93,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    View.OnClickListener mScanClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            if (mBluetoothAdapter == null) {
-                refreshButtonState();
-                Toast.makeText(getApplicationContext(), "Bluetooth Device not available!", Toast.LENGTH_SHORT).show();
-            } else if (!mBluetoothAdapter.isEnabled()) {
-                Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
-            }
-            loadPairedDevices();
-            ensureDiscoverable();
-
-        }
-    };
-
     View.OnClickListener mToggleClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
@@ -112,7 +101,7 @@ public class MainActivity extends Activity {
     };
 
     /**
-     * The on-item-click listener for all devices in the ListViews
+     * The on-item-click listener for all devices in the ListView
      */
     private AdapterView.OnItemClickListener mDeviceClickListener
             = new AdapterView.OnItemClickListener() {
@@ -124,7 +113,7 @@ public class MainActivity extends Activity {
             String info = ((TextView) v).getText().toString();
             String address = info.substring(info.length() - 17);
 
-            BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+//            BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
 
             // Create the result Intent and include the MAC address
             Intent intent = new Intent(MainActivity.this, ConnectedActivity.class);
@@ -137,11 +126,7 @@ public class MainActivity extends Activity {
      * Load the list of already paired devices
      */
     public void loadPairedDevices() {
-        ArrayList<String> arrayList = new ArrayList<>();
-        ArrayAdapter<String> pairedDevicesArrayAdapter =
-                new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, arrayList);
 
-        pairedDevicesList.setAdapter(pairedDevicesArrayAdapter);
         pairedDevicesArrayAdapter.clear();
         pairedDevices = mBluetoothAdapter.getBondedDevices();
         if (mBluetoothAdapter.getBondedDevices().size() > 0) {
@@ -161,33 +146,18 @@ public class MainActivity extends Activity {
      */
     private void toggleBluetooth() {
         if (mBluetoothAdapter == null) {
-            refreshButtonState();
             Toast.makeText(getApplicationContext(), "Bluetooth Device not available!", Toast.LENGTH_SHORT).show();
+            toggleBTButton.setEnabled(false);
+            loadDevices.setEnabled(false);
         } else if (!mBluetoothAdapter.isEnabled()) {
             Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
         } else if (mBluetoothAdapter.isEnabled()) {
             mBluetoothAdapter.disable();
-            refreshButtonState();
+            pairedDevicesArrayAdapter.clear();
+
+            pairedDevicesArrayAdapter.notifyDataSetChanged();
             Toast.makeText(getApplicationContext(), "Bluetooth turned off", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    /**
-     * Refresh the button state if bluetooth state is changed
-     */
-    private void refreshButtonState() {
-        Log.e(TAG, "Button State Refreshed");
-        if (mBluetoothAdapter != null) {
-            if (mBluetoothAdapter.isEnabled()) {
-                toggleBTButton.setText("Turn Bluetooth Off");
-            } else if (!mBluetoothAdapter.isEnabled()) {
-                toggleBTButton.setText("Turn Bluetooth On");
-            }
-        } else {
-            toggleBTButton.setText("Bluetooth adapter unavailable");
-            toggleBTButton.setEnabled(false);
-
         }
     }
 
@@ -196,14 +166,11 @@ public class MainActivity extends Activity {
         switch (requestCode) {
             case REQUEST_ENABLE_BT:
                 if (resultCode == RESULT_OK) {
-                    refreshButtonState();
                     Toast.makeText(getApplicationContext(), "Bluetooth enabled Successfully", Toast.LENGTH_SHORT).show();
                     loadPairedDevices();
                 } else if (resultCode == RESULT_CANCELED) {
                     Toast.makeText(getApplicationContext(), "Action cancelled by User!", Toast.LENGTH_SHORT).show();
-                    refreshButtonState();
                 } else {
-                    refreshButtonState();
                     Toast.makeText(getApplicationContext(), "Bluetooth couldn't be enabled!", Toast.LENGTH_SHORT).show();
                 }
             case REQUEST_ENABLE_DISCOVERY:
@@ -223,10 +190,13 @@ public class MainActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         switch (item.getItemId()) {
-            case R.id.menu_accept_connection:
-
+            case R.id.menu_ensure_discover:
+                ensureDiscoverable();
                 return true;
             case R.id.menu_bluetooth_settings:
+                Intent openBtSettings = new Intent();
+                openBtSettings.setAction(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS);
+                startActivity(openBtSettings);
                 return true;
             case R.id.menu_about:
                 return true;
